@@ -2,6 +2,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +54,7 @@ class _loginScreenState extends State<loginScreen>{
 
 
   Future<UserCredential?> _signInWithGoogle() async {
-    try{
+    try {
       await InternetAddress.lookup('google.com');
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -68,12 +69,27 @@ class _loginScreenState extends State<loginScreen>{
       );
 
       // Once signed in, return the UserCredential
-      return await APIs.auth.signInWithCredential(credential);
-    }
-    catch(e)
-    {
-      log('\n_signInWithGoogle: $e');
-      Dialogs.showSnackbar(context,"Problem with net");
+      UserCredential userCredential = await APIs.auth.signInWithCredential(credential);
+
+      // Check if user exists in Firestore 'users' collection
+      final user = userCredential.user;
+      final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
+
+      // Check if the user already exists in the Firestore collection
+      final DocumentSnapshot snapshot = await usersCollection.doc(user!.uid).get();
+
+      // If user does not exist, save their email to Firestore
+      if (!snapshot.exists) {
+        await usersCollection.doc(user.uid).set({
+          'email': user.email,
+          // Add any other user info you want to store
+        });
+      }
+
+      return userCredential;
+    } catch (e) {
+      log('\n_signInWithGoogle Error: $e');
+      Dialogs.showSnackbar(context, "Problem with net");
       return null;
     }
   }
