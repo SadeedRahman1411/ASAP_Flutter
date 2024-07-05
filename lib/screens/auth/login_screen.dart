@@ -87,7 +87,7 @@ class _loginScreenState extends State<loginScreen>{
         });
       }
 
-      return await APIs.auth.signInWithCredential(credential);
+      return userCredential;
     } catch (e) {
       log('\n_signInWithGoogle Error: $e');
       Dialogs.showSnackbar(context, "Problem with net");
