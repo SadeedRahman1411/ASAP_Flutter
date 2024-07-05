@@ -47,10 +47,11 @@ class _loginScreenState extends State<loginScreen>{
           log('\nUserAdditionalInfo: ${user.additionalUserInfo}');
 
           Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (_) => homeScreen()) );
+              MaterialPageRoute(builder: (_) => HomeScreen()) );
         }
     });
   }
+
 
 
   Future<UserCredential?> _signInWithGoogle() async {
@@ -86,7 +87,7 @@ class _loginScreenState extends State<loginScreen>{
         });
       }
 
-      return userCredential;
+      return await APIs.auth.signInWithCredential(credential);
     } catch (e) {
       log('\n_signInWithGoogle Error: $e');
       Dialogs.showSnackbar(context, "Problem with net");
