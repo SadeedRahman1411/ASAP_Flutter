@@ -14,45 +14,51 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../helper/dialogs.dart';
-class loginScreen extends StatefulWidget{
-  const loginScreen({super.key});
+class LoginScreen extends StatefulWidget{
+  const LoginScreen({super.key});
 
   @override
-  State<loginScreen> createState() => _loginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _loginScreenState extends State<loginScreen>{
+class _LoginScreenState extends State<LoginScreen> {
   bool _isAnimate = false;
 
   @override
-  void initState()
-  {
+  void initState() {
     super.initState();
-    Future.delayed(Duration(milliseconds: 500),(){
-      setState(() {
-        _isAnimate=true;
-      });
+
+    //for auto triggering animation
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() => _isAnimate = true);
     });
   }
 
-  _handleGooglebtnclick()
-  {
+  // handles google login button click
+  _handleGoogleBtnClick() {
+    //for showing progress bar
     Dialogs.showProgressBar(context);
-    _signInWithGoogle().then((user){
+
+    _signInWithGoogle().then((user) async {
+      //for hiding progress bar
       Navigator.pop(context);
 
-      if(user!=null)
-        {
-          log('\nUser: ${user.user}');
-          log('\nUserAdditionalInfo: ${user.additionalUserInfo}');
+      if (user != null) {
+        log('\nUser: ${user.user}');
+        log('\nUserAdditionalInfo: ${user.additionalUserInfo}');
 
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (_) => HomeScreen()) );
+        if (await APIs.userExists() && mounted) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        } else {
+          await APIs.createUser().then((value) {
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+          });
         }
+      }
     });
   }
-
-
 
   Future<UserCredential?> _signInWithGoogle() async {
     try {
@@ -61,7 +67,8 @@ class _loginScreenState extends State<loginScreen>{
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+      final GoogleSignInAuthentication? googleAuth =
+      await googleUser?.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -70,72 +77,70 @@ class _loginScreenState extends State<loginScreen>{
       );
 
       // Once signed in, return the UserCredential
-      UserCredential userCredential = await APIs.auth.signInWithCredential(credential);
+      return await APIs.auth.signInWithCredential(credential);
+    } catch (e) {
+      log('\n_signInWithGoogle: $e');
 
-      // Check if user exists in Firestore 'users' collection
-      final user = userCredential.user;
-      final CollectionReference usersCollection = FirebaseFirestore.instance.collection('users');
-
-      // Check if the user already exists in the Firestore collection
-      final DocumentSnapshot snapshot = await usersCollection.doc(user!.uid).get();
-
-      // If user does not exist, save their email to Firestore
-      if (!snapshot.exists) {
-        await usersCollection.doc(user.uid).set({
-          'email': user.email,
-          // Add any other user info you want to store
-        });
+      if (mounted) {
+        Dialogs.showSnackbar(context, 'Something Went Wrong (Check Internet!)');
       }
 
-      return userCredential;
-    } catch (e) {
-      log('\n_signInWithGoogle Error: $e');
-      Dialogs.showSnackbar(context, "Problem with net");
       return null;
     }
   }
+
   @override
-  Widget build(BuildContext context){
-    //mq = MediaQuery.of(context).size;
+  Widget build(BuildContext context) {
+    //initializing media query (for getting device screen size)
+    mq = MediaQuery.sizeOf(context);
+
     return Scaffold(
+      //app bar
       appBar: AppBar(
-          centerTitle: true,
-          title: Text("Welcome to ASAP"),
-
-
+        automaticallyImplyLeading: false,
+        title: const Text('Welcome to ASAP'),
       ),
+
+      //body
       body: Stack(children: [
+        //app logo
         AnimatedPositioned(
-           top: mq.height * .15,
-            right: _isAnimate?mq.width * .15 : -mq.width * .5,
-            width: mq.width * .7,
+            top: mq.height * .15,
+            right: _isAnimate ? mq.width * .25 : -mq.width * .5,
+            width: mq.width * .5,
             duration: const Duration(seconds: 1),
             child: Image.asset('assets/images/ic_launcher.png')),
+
+        //google login button
         Positioned(
-            top: mq.height * .65,
+            bottom: mq.height * .15,
             left: mq.width * .05,
             width: mq.width * .9,
-            height:mq.height * .06,
+            height: mq.height * .06,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: Color.fromRGBO(159, 252, 82, 180),shape: StadiumBorder()),
-                onPressed: (){
-                _handleGooglebtnclick();
-                },
-                icon: Image.asset('assets/images/google.png',height: mq.height *.04,),
-                label: RichText(
-                  text: TextSpan(
-                    style: TextStyle(color: Colors.black,fontSize: 18),
-                      children: [
-                  TextSpan(text: "Login with "),
-                  TextSpan(text: "Google",style: TextStyle(fontWeight: FontWeight.w900)),
-                ]
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 223, 255, 187),
+                    shape: const StadiumBorder(),
+                    elevation: 1),
 
-                        ),
-                ),
-            )
-        ),
+                // on tap
+                onPressed: _handleGoogleBtnClick,
+
+                //google icon
+                icon: Image.asset('assets/images/google.png', height: mq.height * .03),
+
+                //login with google label
+                label: RichText(
+                  text: const TextSpan(
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                      children: [
+                        TextSpan(text: 'Login with '),
+                        TextSpan(
+                            text: 'Google',
+                            style: TextStyle(fontWeight: FontWeight.w500)),
+                      ]),
+                ))),
       ]),
     );
   }
-}
-//c
+}//c
