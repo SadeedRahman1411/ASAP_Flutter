@@ -1,9 +1,15 @@
+import 'dart:developer';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_group_project/screens/home_screen.dart';
 import 'package:flutter_group_project/screens/auth/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_group_project/screens/splash_screen.dart';
+import 'package:flutter_notification_channel/flutter_notification_channel.dart';
+import 'package:flutter_notification_channel/notification_importance.dart';
+import 'package:flutter_notification_channel/notification_importance.dart';
 import 'firebase_options.dart';
 
 late Size mq;
@@ -26,17 +32,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'ASAP',
-      theme: ThemeData(
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          elevation: 2,
-           iconTheme: IconThemeData(color: Colors.white70),
-           titleTextStyle: TextStyle(color: Colors.white70,fontSize: 25,fontWeight: FontWeight.bold ),
-          backgroundColor: (Colors.blueAccent),
-      )),
-      home: const splashScreen()
+        debugShowCheckedModeBanner: false,
+        title: 'ASAP',
+        theme: ThemeData(
+            appBarTheme: AppBarTheme(
+              centerTitle: true,
+              elevation: 2,
+              iconTheme: IconThemeData(color: Colors.white70),
+              titleTextStyle: TextStyle(color: Colors.white70,fontSize: 25,fontWeight: FontWeight.bold ),
+              backgroundColor: (Colors.blueAccent),
+            )),
+        home: const splashScreen()
     );
   }
 }
@@ -44,7 +50,5 @@ class MyApp extends StatelessWidget {
 _initializeFirebase() async
 {
   await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,);
+    options: DefaultFirebaseOptions.currentPlatform,);
 }
-
-
